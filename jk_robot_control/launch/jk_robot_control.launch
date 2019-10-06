@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="jk_robot_control" name="jk_robot_control_node" type="jk_robot_control.py" output="screen" />
+  <node respawn="true" pkg="joy" type="joy_node" name="jk_joy" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.12" />
+  </node>
+</launch>

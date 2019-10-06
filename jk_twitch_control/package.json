@@ -1,0 +1,23 @@
+{
+  "name": "jk_twitch_control",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slaterobotics/jk_twitch_control.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/slaterobotics/jk_twitch_control/issues"
+  },
+  "homepage": "https://github.com/slaterobotics/jk_twitch_control#readme",
+  "dependencies": {
+    "rosnodejs": "^3.0.0",
+    "tmi.js": "^1.5.0"
+  }
+}
