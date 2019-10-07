@@ -22,7 +22,7 @@ rosnodejs.initNode('/jk_twitch_node').then(function (rosNode) {
 	let pub = rosNode.advertise('/jk/twitch_cmd', geometry_msgs.Twist);
 	
 	let jk_mode = rosNode.subscribe('/jk/mode', 'std_msgs/String', function (data) {
-		client.say("slaterobotics", "**MODE CHANGED: " + data.data);
+		client.say(config.channel, "**MODE CHANGED: " + data.data);
 	});
 
 	function onMessageHandler (target, context, msg, self) {
@@ -45,7 +45,7 @@ rosnodejs.initNode('/jk_twitch_node').then(function (rosNode) {
 	
 	let aggregator = new Aggregator();
 	aggregator.on("tick", onTick);
-	aggregator.freq = 2.0;
+	aggregator.freq = 1.5;
 
 	client.on('message', onMessageHandler);
 	client.connect();

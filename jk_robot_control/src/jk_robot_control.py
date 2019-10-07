@@ -142,7 +142,7 @@ def teleop():
 		t_delta = current_time - last_twitch_data
 		last_twitch_data_delta = t_delta.total_seconds()
 		
-		if last_twitch_data_delta < 0.50:
+		if last_twitch_data_delta < 1.0/1.5:
 			y = int(math.floor(twitch_data.linear.y * 100.0))
 			rotation = math.floor(twitch_data.linear.x * -100.0)
 			bl, br = getMotorValues(y, rotation)
@@ -154,7 +154,6 @@ def teleop():
 		return
 	
 	msgString = str(bl) + ',' + str(br) + ',;'
-	print msgString
 	
 	if (arduino.isOpen() == False):
 			arduino.open()

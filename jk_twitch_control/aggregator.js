@@ -7,22 +7,22 @@ module.exports = function () {
 		id: 0,
 		name: "forward",
 		count: 0,
-		vector: {x: 0, y: 1},
+		vector: {x: 0, y: 0.75},
 	}, {
 		id: 1,
 		name: "backward",
 		count: 0,
-		vector: {x: 0, y: -1},
+		vector: {x: 0, y: -0.75},
 	}, {
 		id: 2,
 		name: "left",
 		count: 0,
-		vector: {x: -1, y: 0},
+		vector: {x: -1, y: -0.5},
 	}, {
 		id: 3,
 		name: "right",
 		count: 0,
-		vector: {x: 1, y: 0},
+		vector: {x: 1, y: 0.5},
 	}]
 
 	this.run = function () {
@@ -51,7 +51,7 @@ module.exports = function () {
 	this.parse = function (cmd) {
 		if (this.running == true) {
 			for (var i = 0; i < this.votes.length; i++) {
-				if (cmd == this.votes[i].name) {
+				if (cmd.toLowerCase() == this.votes[i].name) {
 					this.votes[i].count++;
 				}
 			}
