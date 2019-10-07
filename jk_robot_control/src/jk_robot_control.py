@@ -12,9 +12,12 @@ import datetime
 import subprocess
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String
 from std_msgs.msg import Float64
 
 close = False
+
+jk_mode_pub = None
 
 while len(glob.glob('/dev/ttyACM*')) < 1:
 	print("Waiting for Arduino connections. Retrying every 1 sec.")
@@ -48,14 +51,15 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def subscriber_callback(data):
-	global joy_data, last_joy_data, flag_xbox_control, flag_debounce
+	global joy_data, last_joy_data, flag_xbox_control, flag_debounce, jk_mode_pub
 	joy_data = data
 	last_joy_data = datetime.datetime.now()
-	
 	
 	current_time = datetime.datetime.now()
 	t_delta = current_time - flag_debounce
 	flag_debounce_delta = t_delta.total_seconds()
+	
+	prev_mode = flag_xbox_control
 	
 	# XBOX-Button: give control to twitch
 	if (data.buttons[8] == 1):
@@ -63,6 +67,12 @@ def subscriber_callback(data):
 		flag_debounce = datetime.datetime.now()
 	elif (flag_debounce_delta > 0.250):	
 		flag_xbox_control = True
+		
+	if prev_mode != flag_xbox_control:
+		if flag_xbox_control == True:
+			jk_mode_pub.publish("MASTER")
+		else:
+			jk_mode_pub.publish("TWITCH")
 
 # input: numpy array, -1 to 1 value
 def getMotorValues(y, rotationStrength):
@@ -132,9 +142,9 @@ def teleop():
 		t_delta = current_time - last_twitch_data
 		last_twitch_data_delta = t_delta.total_seconds()
 		
-		if last_twitch_data_delta < 1.0:
+		if last_twitch_data_delta < 0.50:
 			y = int(math.floor(twitch_data.linear.y * 100.0))
-			rotation = math.floor(twitch_data.linear.x * 100.0)
+			rotation = math.floor(twitch_data.linear.x * -100.0)
 			bl, br = getMotorValues(y, rotation)
 			
 	bl = int(bl)
@@ -159,8 +169,9 @@ def twitch_cmd_cb(data):
 	twitch_data = data
 
 def program():
-	global close, flag_xbox_control
+	global close, flag_xbox_control, jk_mode_pub
 	rospy.init_node('ip_xbox_teleop', anonymous=True)
+	jk_mode_pub = rospy.Publisher("/jk/mode", String, queue_size=10)
 	rospy.Subscriber("joy", Joy, subscriber_callback)
 	rospy.Subscriber("/jk/twitch_cmd", Twist, twitch_cmd_cb)
 	

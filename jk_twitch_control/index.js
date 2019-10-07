@@ -5,8 +5,7 @@ const tmi = require('tmi.js');
 
 const Aggregator = require('./aggregator.js');
 
-
-let config = fs.readFileSync('./config.json');
+let config = fs.readFileSync(__dirname + '/config.json');
 config = JSON.parse(config);
 
 const client = new tmi.client({
@@ -21,16 +20,18 @@ const client = new tmi.client({
 
 rosnodejs.initNode('/jk_twitch_node').then(function (rosNode) {
 	let pub = rosNode.advertise('/jk/twitch_cmd', geometry_msgs.Twist);
+	
+	let jk_mode = rosNode.subscribe('/jk/mode', 'std_msgs/String', function (data) {
+		client.say("slaterobotics", "**MODE CHANGED: " + data.data);
+	});
 
 	function onMessageHandler (target, context, msg, self) {
 		if (self) { return; }
-		// client.say(target, "Message to appear");
 		const cmd = msg.trim();
 		aggregator.parse(cmd);
 	}
 	
 	function onTick(vote) {
-		console.log("Robot is moving: " + vote.name);
 		const msg = new geometry_msgs.Twist();
 		msg.linear.x = vote.vector.x;
 		msg.linear.y = vote.vector.y;
@@ -44,6 +45,7 @@ rosnodejs.initNode('/jk_twitch_node').then(function (rosNode) {
 	
 	let aggregator = new Aggregator();
 	aggregator.on("tick", onTick);
+	aggregator.freq = 2.0;
 
 	client.on('message', onMessageHandler);
 	client.connect();
