@@ -21,7 +21,9 @@ class Motor {
   
   public:
     int id;
-    int motorSpeed;
+    int speedCurrent = 0;
+    int speedSet;
+    int speedInc = 10;
     bool isMovingForward = false;
     bool isMovingBackward = false;
     void setUp();

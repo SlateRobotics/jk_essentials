@@ -134,6 +134,8 @@ def teleop():
 			y = int(math.floor(cmdY * 100.0))
 			rotation = math.floor(cmdX * 100.0)
 			bl, br = getMotorValues(y, rotation)
+			bl = bl * 0.75
+			br = br * 0.75
 	else:
 		if (twitch_data == None):
 			return

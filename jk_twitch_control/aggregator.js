@@ -17,12 +17,12 @@ module.exports = function () {
 		id: 2,
 		name: "left",
 		count: 0,
-		vector: {x: -1, y: -0.5},
+		vector: {x: -0.85, y: 0},
 	}, {
 		id: 3,
 		name: "right",
 		count: 0,
-		vector: {x: 1, y: 0.5},
+		vector: {x: 0.85, y: 0},
 	}]
 
 	this.run = function () {

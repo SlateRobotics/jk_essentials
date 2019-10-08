@@ -6,8 +6,8 @@ Motor::Motor() {
 }
 
 Motor::Motor(int id, int pinEnable, int pinDrive1, int pinDrive2) {
-  // motorSpeed set to a percentage of max voltage to pins
-  this->motorSpeed = 0;
+  // speedSet set to a percentage of max voltage to pins
+  this->speedSet = 0;
   this->encoderTickCount = 0;
   this->id = id;
   this->pinEnable = pinEnable;
@@ -27,10 +27,11 @@ void Motor::changeMotorDirection() {
 }
 
 void Motor::setPinSpeed() {
-  if (motorSpeed > maxSpeed) {
-    motorSpeed = maxSpeed;
+  int s = abs(speedCurrent);
+  if (s > maxSpeed) {
+    s = maxSpeed;
   }
-  int pinStrength = int(255.0 * (motorSpeed / 100.0));
+  int pinStrength = int(255.0 * (s / 100.0));
   analogWrite(pinEnable, pinStrength);
 }
 
@@ -44,13 +45,11 @@ void Motor::setUp() {
 
 void Motor::forward(int speed = 100) {
   // given speed should be a percentage of total speed so that we can tell it to start slowly
-  this->motorSpeed = speed;
   if (speed < minSpeed) {
     analogWrite(pinEnable, LOW);
     digitalWrite(pinDrive1, LOW);
     digitalWrite(pinDrive2, LOW);
   } else {
-    setPinSpeed();
     digitalWrite(pinDrive1, HIGH);
     digitalWrite(pinDrive2, LOW);
   }
@@ -60,13 +59,11 @@ void Motor::forward(int speed = 100) {
 }
 
 void Motor::backward(int speed = 100) {
-  this->motorSpeed = speed;
   if (speed < minSpeed) {
     analogWrite(pinEnable, LOW);
     digitalWrite(pinDrive1, LOW);
     digitalWrite(pinDrive2, LOW);
   } else {
-    setPinSpeed();
     digitalWrite(pinDrive1, LOW);
     digitalWrite(pinDrive2, HIGH);
   }
@@ -76,17 +73,40 @@ void Motor::backward(int speed = 100) {
 }
 
 void Motor::step(int speed = 100) {
-  if (speed > 0) {
-    forward(abs(speed));
-  } else if (speed < 0) {
-    backward(abs(speed));
+  speedSet = speed;
+  
+  if (speedSet != speedCurrent) {
+    int dir = 1;
+    if (speedSet < speedCurrent) {
+      dir = -1;
+    }
+
+    if (abs(speedSet - speedCurrent) < speedInc) {
+      speedCurrent = speedSet;
+    } else {
+      speedCurrent = speedCurrent + (dir * speedInc);
+    }
+    
+    setPinSpeed();
+  }
+
+  /*
+  analogWrite(pinEnable, LOW);
+  digitalWrite(pinDrive1, LOW);
+  digitalWrite(pinDrive2, LOW);
+  */
+  
+  if (speedCurrent > 0) {
+    forward(abs(speedCurrent));
+  } else if (speedCurrent < 0) {
+    backward(abs(speedCurrent));
   } else {
     stop();
   }
 }
 
 void Motor::stop() {
-  this->motorSpeed = 0;
+  this->speedSet = 0;
   analogWrite(pinEnable, LOW);
   digitalWrite(pinDrive1, LOW);
   digitalWrite(pinDrive2, LOW);
@@ -134,13 +154,13 @@ void Motor::clearPreparedCommand() {
   flagExecuteExpiration = millis() - 2000;
 }
 
-void Motor::prepareCommand(int motorSpeed, int duration) {
+void Motor::prepareCommand(int speedSet, int duration) {
   flagExecute = true;
-  flagExecuteSpeed = motorSpeed;
+  flagExecuteSpeed = speedSet;
   flagExecuteDuration = duration;
   flagExecuteExpiration = millis() + duration;
   
-  lastPreparedCommand[0] = motorSpeed;
+  lastPreparedCommand[0] = speedSet;
   lastPreparedCommand[1] = duration;
 }
 
