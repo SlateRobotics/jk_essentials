@@ -19,6 +19,9 @@ close = False
 
 jk_mode_pub = None
 
+CONTROL_MSG_XBOX = "HAPPY"
+CONTROL_MSG_TWITCH = "ANGRY"
+
 while len(glob.glob('/dev/ttyACM*')) < 1:
 	print("Waiting for Arduino connections. Retrying every 1 sec.")
 	time.sleep(1.0)
@@ -47,46 +50,46 @@ def signal_handler(sig, frame):
 	global close
 	close = True
 	sys.exit(0)
-	
+
 signal.signal(signal.SIGINT, signal_handler)
 
 def subscriber_callback(data):
 	global joy_data, last_joy_data, flag_xbox_control, flag_debounce, jk_mode_pub
 	joy_data = data
 	last_joy_data = datetime.datetime.now()
-	
+
 	current_time = datetime.datetime.now()
 	t_delta = current_time - flag_debounce
 	flag_debounce_delta = t_delta.total_seconds()
-	
+
 	prev_mode = flag_xbox_control
-	
+
 	# XBOX-Button: give control to twitch
 	if (data.buttons[8] == 1):
 		flag_xbox_control = False
 		flag_debounce = datetime.datetime.now()
-	elif (flag_debounce_delta > 0.250):	
+	elif (flag_debounce_delta > 0.250):
 		flag_xbox_control = True
-		
+
 	if prev_mode != flag_xbox_control:
 		if flag_xbox_control == True:
-			jk_mode_pub.publish("MASTER")
+			jk_mode_pub.publish(CONTROL_MSG_XBOX)
 		else:
-			jk_mode_pub.publish("TWITCH")
+			jk_mode_pub.publish(CONTROL_MSG_TWITCH)
 
 # input: numpy array, -1 to 1 value
 def getMotorValues(y, rotationStrength):
 	desiredMagnitude = abs(y)
 	if (abs(rotationStrength) > desiredMagnitude):
 		desiredMagnitude = abs(rotationStrength)
-		
+
 	if (desiredMagnitude == 0):
 		return 0, 0
 
 	# define motors
 	left = y
 	right = y
-	
+
 	#manipulate values based on rotation from rotationStrength
 	rotationStrength = rotationStrength * 2
 	left = left + rotationStrength
@@ -109,24 +112,24 @@ def getMotorValues(y, rotationStrength):
 
 def teleop():
 	global mode, flag_xbox_control, joy_data, last_joy_data, twitch_data, last_twitch_data
-	
+
 	bl = 0
 	br = 0
-	
+
 	if flag_xbox_control == True:
 		if (joy_data == None):
 			return
-			
+
 		current_time = datetime.datetime.now()
 		t_delta = current_time - last_joy_data
 		last_joy_data_delta = t_delta.total_seconds()
-	
+
 		cmdX = joy_data.axes[6]
 		cmdY = joy_data.axes[7]
-	
+
 		if cmdX == 0:
 			cmdX = joy_data.axes[0]
-		
+
 		if cmdY == 0:
 			cmdY = joy_data.axes[1]
 
@@ -139,31 +142,31 @@ def teleop():
 	else:
 		if (twitch_data == None):
 			return
-			
+
 		current_time = datetime.datetime.now()
 		t_delta = current_time - last_twitch_data
 		last_twitch_data_delta = t_delta.total_seconds()
-		
+
 		if last_twitch_data_delta < 1.0/1.5:
 			y = int(math.floor(twitch_data.linear.y * 100.0))
 			rotation = math.floor(twitch_data.linear.x * -100.0)
 			bl, br = getMotorValues(y, rotation)
-			
+
 	bl = int(bl)
 	br = int(br)
-	
+
 	if (abs(bl) + abs(br)) < 0.1:
 		return
-	
+
 	msgString = str(bl) + ',' + str(br) + ',;'
-	
+
 	if (arduino.isOpen() == False):
 			arduino.open()
-		
+
 	for c in msgString:
 		arduino.write(c)
 		time.sleep(0.001)
-		
+
 def twitch_cmd_cb(data):
 	global twitch_data, last_twitch_data
 	last_twitch_data = datetime.datetime.now()
@@ -175,9 +178,9 @@ def program():
 	jk_mode_pub = rospy.Publisher("/jk/mode", String, queue_size=10)
 	rospy.Subscriber("joy", Joy, subscriber_callback)
 	rospy.Subscriber("/jk/twitch_cmd", Twist, twitch_cmd_cb)
-	
+
 	flag_xbox_control = True
-	
+
 	while close != True:
 		teleop()
 		time.sleep(0.150)

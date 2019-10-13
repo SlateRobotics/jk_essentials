@@ -1,1 +1,3 @@
 jk_twitch_control/config.json
+*.pyc
+*~
