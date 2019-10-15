@@ -19,8 +19,8 @@ close = False
 
 jk_mode_pub = None
 
-CONTROL_MSG_XBOX = "HAPPY"
-CONTROL_MSG_TWITCH = "ANGRY"
+CONTROL_MSG_XBOX = "REST"
+CONTROL_MSG_TWITCH = "TURBO"
 
 while len(glob.glob('/dev/ttyACM*')) < 1:
 	print("Waiting for Arduino connections. Retrying every 1 sec.")
